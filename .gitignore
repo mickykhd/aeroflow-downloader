@@ -1,0 +1,23 @@
+# Rust / Tauri
+target/
+src-tauri/target/
+src-tauri/WixTools/
+node_modules/
+dist/
+
+# AeroFlow runtime
+*.part
+*.part*.json
+queue.json
+*.log
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp

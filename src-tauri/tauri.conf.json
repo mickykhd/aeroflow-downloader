@@ -1,0 +1,47 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "AeroFlow Downloader",
+  "version": "4.2.0",
+  "identifier": "com.aeroflow.downloader",
+  "build": {
+    "frontendDist": "../src",
+    "beforeDevCommand": "",
+    "beforeBuildCommand": ""
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "AeroFlow Downloader v4.2 PRO",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 960,
+        "minHeight": 600,
+        "decorations": false,
+        "transparent": false,
+        "backgroundColor": "#0C0E14"
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": ["icons/icon.png"],
+    "category": "Utility",
+    "shortDescription": "High-performance multi-segment download manager for Windows",
+    "longDescription": "AeroFlow Downloader — Turbo 32x multi-socket engine, scheduler matrix, proxy routing, SHA-256 verification. Glassmorphic Precision desktop client.",
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
+  },
+  "plugins": {}
+}

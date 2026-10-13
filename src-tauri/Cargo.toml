@@ -1,0 +1,41 @@
+[package]
+name = "aeroflow-downloader"
+version = "4.2.0"
+edition = "2021"
+description = "AeroFlow Downloader — high-performance Windows download manager (Tauri v2 + Tokio multi-segment engine)"
+authors = ["AeroFlow"]
+license = "MIT"
+rust-version = "1.77"
+
+[lib]
+name = "aeroflow_downloader_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
+futures-util = "0.3"
+sha2 = "0.10"
+hex = "0.4"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+sysinfo = "0.32"
+url = "2"
+tokio-util = { version = "0.7", features = ["full"] }
+
+[dev-dependencies]
+tempfile = "3"
+tokio-test = "0.4"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

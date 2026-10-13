@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AeroFlow Downloader v4.2.4 PRO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<div id="app">
+  <header class="topbar" data-tauri-drag-region>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div class="brand"><span class="dot"></span><span>AeroFlow Downloader</span><span class="ver">v4.2.4 PRO</span></div>
+      <nav class="nav" id="topNav">
+        <button data-view="tasks" class="active">Tasks</button>
+        <button data-view="speed">Speed Engine</button>
+        <button data-view="scheduler">Scheduler</button>
+        <button data-view="connections">Connections</button>
+        <button data-view="settings">⚙ Settings</button>
+      </nav>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex:1;max-width:420px;margin:0 12px">
+      <input id="search" type="text" placeholder="Search tasks, hashes, tags…  (Ctrl+F)" style="height:28px"/>
+    </div>
+    <div class="top-right">
+      <div class="pill mono"><span class="cyan">↓ <span id="dlRate">84.6 MB/s</span></span><span class="muted">|</span><span style="color:#adc6ff">↑ <span id="ulRate">4.2 MB/s</span></span></div>
+      <button class="btn" id="btnResumeAll">Resume All</button>
+      <button class="btn-primary btn" id="btnAddUrl">+ Add URL</button>
+      <div class="win-btns"><button title="Minimize" data-win="minimize">─</button><button title="Maximize" data-win="maximize">▢</button><button title="Close" data-win="close">✕</button></div>
+    </div>
+  </header>
+
+  <div class="body">
+    <aside class="sidebar">
+      <div>
+        <div class="engine-card">
+          <div style="display:flex;justify-content:space-between;align-items:center"><strong class="hide-c" style="font-size:13px">Transfer Core</strong><span class="dot" style="width:8px;height:8px;border-radius:50%;background:#65f2b5;box-shadow:0 0 6px #65f2b5"></span></div>
+          <div class="muted hide-c" style="font-size:12px">Engine v4.2.0 • Online</div>
+          <div class="turbo-badge mono hide-c"><span>Turbo Boost Active</span><strong>32x</strong></div>
+        </div>
+        <div class="side-label hide-c">Queue Streams</div>
+        <div id="sideFilters">
+          <button class="side-item active" data-filter="all"><span>⇩</span><span class="hide-c">All Transfers</span><span class="count mono" id="cAll">28</span></button>
+          <button class="side-item" data-filter="active"><span>⇄</span><span class="hide-c">Active Streams</span><span class="count mono cyan" id="cActive">4</span></button>
+          <button class="side-item" data-filter="completed"><span>✓</span><span class="hide-c">Completed</span><span class="count mono" id="cDone">19</span></button>
+          <button class="side-item" data-filter="paused"><span>⏸</span><span class="hide-c">Paused</span><span class="count mono" id="cPaused">3</span></button>
+          <button class="side-item" data-filter="queued"><span>⧗</span><span class="hide-c">Queued</span><span class="count mono" id="cQueued">2</span></button>
+        </div>
+        <div class="side-label hide-c">Categories &amp; Nodes</div>
+        <div id="sideCats">
+          <button class="side-item" data-cat="Torrents"><span>⛨</span><span class="hide-c">Torrents</span><span class="count mono" id="cTorrents">0</span></button>
+          <button class="side-item" data-cat="Media Vault"><span>▶</span><span class="hide-c">Media Vault</span><span class="count mono" id="cMedia">0</span></button>
+          <button class="side-item" data-cat="Archives"><span>🗀</span><span class="hide-c">Archives</span><span class="count mono" id="cArchives">0</span></button>
+        </div>
+        <div class="side-label hide-c">System</div>
+        <button class="side-item" data-view="settings" id="sideEngineSettings"><span>⚙</span><span class="hide-c">Engine Settings</span></button>
+      </div>
+      <div class="storage-card">
+        <button class="side-item" style="padding:3px 6px"><span>⚡</span><span class="hide-c">Bandwidth Limiter</span><span class="count mono">Unlimited</span></button>
+        <button class="side-item" style="padding:3px 6px"><span>🗄</span><span class="hide-c">Storage Pools</span><span class="count mono">3 Mounts</span></button>
+        <div style="display:flex;justify-content:space-between"><span class="muted">SSD NVMe (C:)</span><span class="cyan mono" id="diskFree">642 GB Free</span></div>
+        <div class="bar"><div id="diskBar" style="width:71%"></div></div>
+        <div class="muted mono" style="font-size:11px;display:flex;justify-content:space-between"><span>Pool D: 1.8 TB free</span><span>Total 2.8 TB</span></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="toolbar">
+        <div class="group">
+          <button class="btn-primary btn" id="btnNew">+ New Download</button>
+          <button class="btn" id="btnPauseAll">⏸ Pause All</button>
+          <button class="btn" id="btnPurge">🗑 Purge Finished</button>
+          <button class="btn" data-goto="scheduler">◷ Scheduler</button>
+        </div>
+        <div class="group">
+          <span class="badge mono">Cap: <span id="capLabel">Unlimited / 100 MB/s</span></span>
+          <span class="badge"><span style="color:#65f2b5">●</span> Clipboard Auto-Detect <span class="chip ok">ON</span></span>
+          <span class="badge mono muted" id="showing">Showing 5 of 28 tasks</span>
+        </div>
+      </div>
+
+      <!-- TASKS -->
+      <section class="view" id="view-tasks">
+        <table class="qtable">
+          <thead><tr><th></th><th>File name &amp; source</th><th>Progress (%)</th><th>Speed</th><th>Size</th><th>ETA</th><th>Threads</th><th>Actions</th></tr></thead>
+          <tbody id="queueBody"></tbody>
+        </table>
+      </section>
+
+      <!-- SPEED -->
+      <section class="view hidden" id="view-speed">
+        <div class="cards">
+          <div class="card">
+            <h3>Multi-Segment Connection Pipeline</h3>
+            <p class="desc">Dynamic chunk threading, socket multiplexing, direct memory caches. <span class="chip ok mono">Hardware Accel: ON</span></p>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div><strong>Segment Threads Per Transfer</strong><div class="muted" style="font-size:12px">Concurrent TCP stream slices per file</div></div>
+              <div class="mono cyan"><span id="threadVal" style="font-size:20px">32</span> Threads <span class="chip ok">TURBO EXTREME</span></div>
+            </div>
+            <input id="threadSlider" type="range" min="1" max="64" value="32"/>
+            <div class="mono muted" style="font-size:11px;display:flex;justify-content:space-between"><span>1 (Safe)</span><span>16 (Standard)</span><span class="cyan">32 (Turbo)</span><span>64 (Max)</span></div>
+            <h4 class="muted mono" style="font-size:11px;margin:12px 0 6px">32-PIPELINE SOCKET MAP — <span class="cyan">100% UTILIZATION</span></h4>
+            <div id="socketMap" style="display:flex;flex-direction:column;gap:4px"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="card">
+              <h3>Bandwidth Throttling &amp; QoS</h3>
+              <p class="desc">Global pipe caps and gaming latency guardrails</p>
+              <label class="muted" style="font-size:12px">Global Download Cap (MB/s, 0 = Unlimited)</label>
+              <div style="display:flex;gap:8px"><input id="globalCap" type="number" value="0" min="0" max="1000"/><button class="btn-primary btn" id="applyCap">Apply</button></div>
+              <label class="muted" style="font-size:12px;margin-top:10px;display:block">Global Upload Cap</label>
+              <input id="uploadCap" type="number" value="10"/>
+              <div class="check" style="margin-top:10px"><input type="checkbox" id="qosGaming" checked/><label for="qosGaming">Auto-throttle when gateway ping &gt; 40ms (Gaming QoS)</label></div>
+            </div>
+            <div class="card">
+              <h3>Engine Settings</h3>
+              <div class="check"><input type="checkbox" checked/> Turbo multi-socket v4.2 ACTIVE</div>
+              <div class="check"><input type="checkbox" checked/> Scheduler cron daemon RUNNING</div>
+              <div class="check"><input type="checkbox" checked/> Smart QoS ADAPTIVE</div>
+              <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" id="btnExportProfile">Export Profile</button><button class="btn" id="btnRevertSettings">Revert</button><button class="btn-primary btn" id="applySettings">Apply Settings</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCHEDULER -->
+      <section class="view hidden" id="view-scheduler">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+            <h3>Weekly Throughput Distribution <span class="chip ok">Drag to Paint Cells</span></h3>
+            <span class="chip warn mono" id="schedNow">Current: Tue 14:28 • Work QoS 15 MB/s</span>
+          </div>
+          <div class="legend"><span><i style="background:var(--cyan)"></i>Turbo Uncapped</span><span><i style="background:#f59e0b"></i>Throttled QoS</span><span><i style="background:#6366f1"></i>P2P Priority</span><span><i style="background:#2a2d36"></i>Sleep</span>
+            <span style="margin-left:auto">Paint: </span>
+            <select id="paintMode" style="width:150px;height:28px"><option value="turbo">Turbo</option><option value="throttled" selected>Throttled</option><option value="p2p">P2P Priority</option><option value="sleep">Sleep</option></select>
+          </div>
+          <div class="sched-grid" id="schedGrid"></div>
+        </div>
+        <div class="cards" style="margin-top:12px">
+          <div class="card"><h3>Automated Post-Task Triggers</h3>
+            <label class="muted" style="font-size:12px">On full queue completion</label>
+            <select><option>Put PC to Sleep (S3 Standby)</option><option>Shutdown (S5)</option><option>Do nothing</option></select>
+            <div class="check" style="margin-top:8px"><input type="checkbox" checked/> Allow Windows Wake Timers (night tasks)</div>
+            <div class="check"><input type="checkbox" checked/> Auto-restart stalled transfers (&lt; 500 KB/s for 3 min)</div>
+          </div>
+          <div class="card"><h3>Targeted Queue Routing &amp; Speed Profiles</h3>
+            <div class="entry"><span class="cyan">●</span><div><strong>Night Turbo Dump</strong><div class="muted">01:00–07:00 Daily • All Queues</div></div><span class="mono cyan" style="margin-left:auto">100 MB/s Cap</span></div>
+            <div class="entry" style="border-color:rgba(245,158,11,.5)"><span style="color:var(--amber)">●</span><div><strong>Work From Home Guardrail</strong><div class="muted">Mon–Fri 09:00–18:00 • QoS Gaming</div></div><span class="chip warn" style="margin-left:auto">CURRENT ACTIVE</span></div>
+            <div class="entry"><span style="color:#6366f1">●</span><div><strong>Off-Peak Torrent Seeding</strong><div class="muted">Sat–Sun • Ratio 2.0x</div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONNECTIONS -->
+      <section class="view hidden" id="view-connections">
+        <div class="cards">
+          <div class="card">
+            <h3>Configured Proxy Pools &amp; Cascades</h3>
+            <p class="desc mono cyan">4 Pools Active • Round-Robin Load Balance</p>
+            <table class="mini"><thead><tr><th>Node / Endpoint</th><th>Protocol</th><th>Status</th><th>Latency</th><th>Health</th></tr></thead>
+            <tbody id="proxyBody"></tbody></table>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <input type="text" id="proxyEndpoint" placeholder="socks5://host:port or http://host:port"/>
+              <button class="btn-primary btn" id="btnAddProxy">+ Add Proxy</button>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="card"><h3>Multi-Socket TCP Tuning &amp; Keep-Alive</h3>
+              <label class="muted mono" style="font-size:12px">Concurrent Global Socket Limit: <span class="cyan" id="sockVal">384 Sockets</span></label>
+              <input type="range" id="sockSlider" min="64" max="512" value="384"/>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+                <select><option>BBRv3 Congestion Control</option><option>CUBIC</option><option>YeAH</option></select>
+                <input type="text" value="3000 ms"/>
+              </div>
+              <div class="check" style="margin-top:8px"><input type="checkbox" checked/> HTTP/3 &amp; QUIC Multiplexing (0-RTT)</div>
+            </div>
+            <div class="card"><h3>Domain Bypass &amp; Split-Tunneling</h3>
+              <div id="bypassList" style="display:flex;gap:6px;flex-wrap:wrap"><span class="chip mono">192.168.1.0/24 ✕</span><span class="chip mono">*.local ✕</span><span class="chip mono">*.akamaihd.net ✕</span><span class="chip mono">steamcontent.com ✕</span></div>
+              <label class="muted" style="font-size:12px;margin-top:10px;display:block">DNS-over-HTTPS Provider</label>
+              <div class="entry"><span class="cyan">🔒</span><div><strong>Cloudflare 1.1.1.1</strong><div class="muted mono" style="font-size:11px">Encrypted SNI • Zero DNS Leak</div></div><button class="btn" style="margin-left:auto">Change</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS / GLOBAL ENGINE & PREFERENCES -->
+      <section class="view hidden" id="view-settings">
+        <div class="set-head">
+          <div>
+            <div class="crumb">ENGINE CORE <span class="muted">/</span> <span class="muted">SYSTEM CONFIGURATION</span> <span class="muted">/</span> <span class="chip2 mono">PROFILE: ULTRA-PERFORMANCE</span></div>
+            <h2>Global Engine &amp; Preferences <span class="chip2" id="currentSectionBadge">GENERAL &amp; OS</span></h2>
+            <p>Fine-tune DirectStorage I/O pipelines, BitTorrent swarm sockets, browser stream sniffers, post-verification security, and desktop telemetry.</p>
+          </div>
+          <div class="group" style="flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn" id="btnImportProfile">⇧ Import Profile</button>
+            <button class="btn" id="btnExportProfile2">⇩ Export (.json)</button>
+            <button class="btn" id="btnResetSettings">⟲ Reset</button>
+            <button class="btn-primary btn" id="btnSaveAll">✓ Save &amp; Apply Changes</button>
+          </div>
+        </div>
+        <div class="subtabs">
+          <button class="subtab active" data-spanel="general">General &amp; OS Integration</button>
+          <button class="subtab" data-spanel="storage">Storage, Cache &amp; Direct I/O</button>
+          <button class="subtab" data-spanel="bittorrent">BitTorrent &amp; DHT Protocols</button>
+          <button class="subtab" data-spanel="browser">Browser Integration &amp; Stream Sniffer</button>
+          <button class="subtab" data-spanel="security">Security &amp; Cryptographic Hooks</button>
+          <button class="subtab" data-spanel="notifications">Notifications &amp; System Sounds</button>
+          <span style="margin-left:auto"><button class="btn" id="btnShowAll" style="font-size:11px">▤ Show All Sections</button></span>
+        </div>
+        <div id="settingsPanels" style="margin-top:12px">
+
+          <!-- PANEL: GENERAL & OS -->
+          <div class="spanel active" data-spanel="general">
+            <div class="set-grid2">
+              <div class="card">
+                <div class="set-chead">
+                  <div><h3 style="margin:0">Operating System Integration</h3><div class="lbl-caps">WINDOWS 11 NATIVE SHELL &amp; ACPI HOOKS</div></div>
+                  <span class="chip2 mono">Build 22631 Active</span>
+                </div>
+                <div class="set-rows">
+                  <div class="set-row">
+                    <div>
+                      <h4>Launch AeroFlow on Windows Startup</h4>
+                      <p>Automatically boot the transfer daemon and socket listener on system log-in.</p>
+                      <label class="check-inline"><input type="checkbox" data-pref-check="startMinimized"/> Start Minimized to System Tray</label>
+                    </div>
+                    <button class="toggle" data-pref="launchOnStartup"></button>
+                  </div>
+                  <div class="set-row">
+                    <div>
+                      <h4>Prevent PC from Sleeping while active transfers run</h4>
+                      <p>Enforces kernel ACPI Wake-Lock state. System will idle/screen off without suspending network sockets.</p>
+                    </div>
+                    <button class="toggle" data-pref="preventSleep"></button>
+                  </div>
+                  <div class="set-row">
+                    <div>
+                      <h4>Enable Windows 11 Shell Context Menu Integration</h4>
+                      <p>Injects "Download with AeroFlow Direct Engine" into Windows File Explorer and link targets.</p>
+                    </div>
+                    <button class="toggle" data-pref="shellContextMenu"></button>
+                  </div>
+                  <div class="set-row">
+                    <div>
+                      <h4>Clipboard URL Auto-Detection &amp; Floating Mini-Dropzone</h4>
+                      <p>Pops a lightweight semi-transparent desktop HUD when valid download links or magnet hashes are copied.</p>
+                    </div>
+                    <button class="toggle" data-pref="clipboardAutodetect"></button>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="set-chead">
+                  <div><h3 style="margin:0">UI Theme &amp; Cyberpunk Accent System</h3><div class="lbl-caps">WORKSPACE CANVAS &amp; DESKTOP MINI-WIDGET STYLING</div></div>
+                  <span class="chip2" id="accentBadge">Cyberpunk Neon Cyan</span>
+                </div>
+                <div class="set-rows">
+                  <div class="set-box">
+                    <label class="lbl-caps">ACCENT NEON COLORWAYS</label>
+                    <div class="set-grid4" style="margin-top:8px">
+                      <button class="swatch active" data-accent="cyan"><span class="dot-c cyan"></span>Cyan HUD</button>
+                      <button class="swatch" data-accent="mint"><span class="dot-c mint"></span>Matrix Mint</button>
+                      <button class="swatch" data-accent="cobalt"><span class="dot-c cobalt"></span>Cobalt Sky</button>
+                      <button class="swatch" data-accent="crimson"><span class="dot-c crimson"></span>Crimson Core</button>
+                    </div>
+                  </div>
+                  <div class="set-box">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                      <h4 style="margin:0;font-size:13px">Mini-Dropzone Floating Overlay Opacity</h4>
+                      <span class="mono cyan" data-range-out="dropzoneOpacity" data-unit="%">85%</span>
+                    </div>
+                    <input type="range" min="20" max="100" step="5" value="85" data-pref-range="dropzoneOpacity" data-unit="%"/>
+                    <div class="slider-labels"><span>Ghost (20%)</span><span>Standard (60%)</span><span class="cyan">Vivid HUD (85%)</span><span>Opaque (100%)</span></div>
+                  </div>
+                  <div class="set-row">
+                    <div>
+                      <h4>System Tray Animated Speed Meter</h4>
+                      <p>Draws dynamic real-time transfer graphs right on the Windows taskbar icon.</p>
+                    </div>
+                    <button class="toggle" data-pref="traySpeedMeter"></button>
+                  </div>
+                </div>
+                <div class="set-foot"><span>Hardware acceleration: Vulkan Compositor</span><span class="cyan">● 144 FPS Rendering</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL: STORAGE -->
+          <div class="spanel" data-spanel="storage">
+            <div class="card">
+              <div class="set-chead">
+                <div><h3 style="margin:0">Storage, Drive Cache &amp; DirectStorage Architecture</h3><div class="lbl-caps">NVME PCIE 4.0/5.0 HARDWARE PIPELINE &amp; FLUSH POLICIES</div></div>
+                <span class="chip2 mono">DirectStorage 1.2 Bypass: ENABLED</span>
+              </div>
+              <div class="set-rows">
+                <div class="set-grid2">
+                  <div class="set-box">
+                    <div style="display:flex;justify-content:space-between"><label class="lbl-caps">DEFAULT DOWNLOAD VAULT DIRECTORY</label><span class="mono cyan" style="font-size:11px">642 GB Free / Fast NVMe</span></div>
+                    <div style="display:flex;gap:8px;margin-top:6px"><input type="text" data-pref-str="defaultDest" value="D:\Downloads\AeroFlow_Vault"/><button class="btn" id="btnBrowseVault">Browse…</button></div>
+                    <div class="lbl-sub">Filesystem: <strong>NTFS 4KB Cluster</strong> • Write Speed: <strong class="cyan">5,420 MB/s</strong></div>
+                  </div>
+                  <div class="set-box">
+                    <div style="display:flex;justify-content:space-between"><label class="lbl-caps">TEMPORARY PART CHUNKS CACHE DIRECTORY</label><span class="lbl-sub" style="margin:0">Auto-purged upon completion</span></div>
+                    <div style="display:flex;gap:8px;margin-top:6px"><input type="text" data-pref-str="tempCacheDir" value="D:\Downloads\.aeroflow_temp_cache"/><button class="btn" id="btnBrowseTemp">Browse…</button></div>
+                    <div class="lbl-sub">Current Cached: <strong>1.82 GB (5 tasks)</strong> • <button class="link-btn" id="btnPurgeChunks">Purge Orphaned Chunks</button></div>
+                  </div>
+                </div>
+                <div class="set-box">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                    <div><h4 style="margin:0;font-size:13px">Memory Cache Buffer Size for Direct-to-Disk Flushing</h4>
+                    <p class="lbl-sub" style="margin:2px 0 0">Buffers incoming stream packets directly in system RAM prior to sequential block commits, drastically reducing SSD write wear.</p></div>
+                    <div style="text-align:right"><span class="mono cyan" style="font-size:16px;font-weight:600" data-range-out="bufferCacheMb" data-unit=" MB">256 MB</span><div class="lbl-caps">FLUSH INTERVAL: 1500ms</div></div>
+                  </div>
+                  <input type="range" min="64" max="2048" step="64" value="256" data-pref-range="bufferCacheMb" data-unit=" MB" style="margin-top:8px"/>
+                  <div class="slider-labels"><span>64 MB (Light)</span><span>128 MB</span><span class="cyan">256 MB (Optimized)</span><span>512 MB</span><span>1024 MB</span><span>2048 MB (Server Rig)</span></div>
+                </div>
+                <div class="set-grid3">
+                  <div class="set-row"><div><h4>Sparse File Pre-allocation</h4><p>Reserve full contiguous disk clusters on download inception to eliminate fragmentation.</p></div><button class="toggle" data-pref="sparsePrealloc"></button></div>
+                  <div class="set-row"><div><h4>DirectStorage Direct I/O Bypass</h4><p>Bypasses OS filesystem caching layer; writes payloads directly across NVMe Gen4/Gen5 lanes.</p></div><button class="toggle" data-pref="directstorageBypass"></button></div>
+                  <div class="set-row"><div><h4>Auto-Trim &amp; Cluster Defrag</h4><p>Issues native NVMe TRIM commands upon multi-chunk stitching to prevent sector fragmentation.</p></div><button class="toggle" data-pref="autoTrim"></button></div>
+                </div>
+                <div class="set-box">
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div><h4 style="margin:0;font-size:13px">Auto-Relocate Completed Downloads By Category</h4>
+                    <p class="lbl-sub" style="margin:2px 0 0">Automatically transfer final payloads from high-speed NVMe cache pool to long-term RAID/cold storage pools.</p></div>
+                    <label class="check-inline" style="margin:0"><input type="checkbox" data-pref-check="autoRelocate"/> Auto-Relocation Active</label>
+                  </div>
+                  <div class="set-grid3" style="margin-top:8px">
+                    <div class="mini-row"><div><strong>Movies &amp; Series</strong><span class="lbl-sub" style="margin:0">D:\Downloads\Vault\Movies</span></div><span class="cyan" style="font-size:11px">NVMe &gt; Pool E:\</span></div>
+                    <div class="mini-row"><div><strong>ISOs &amp; disk images</strong><span class="lbl-sub" style="margin:0">D:\Downloads\Vault\Images</span></div><span class="cyan" style="font-size:11px">NVMe &gt; Pool F:\</span></div>
+                    <div class="mini-row"><div><strong>Audio master rips</strong><span class="lbl-sub" style="margin:0">D:\Downloads\Vault\Music</span></div><span class="cyan" style="font-size:11px">NVMe &gt; NAS 10GbE</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL: BITTORRENT -->
+          <div class="spanel" data-spanel="bittorrent">
+            <div class="card">
+              <div class="set-chead">
+                <div><h3 style="margin:0">BitTorrent Engine, DHT &amp; Swarm Configuration</h3><div class="lbl-caps">LIBTORRENT 2.0 PROTOCOL STACK &amp; PEER SOCKET LIMITERS</div></div>
+                <span class="chip2 mono">uTP &amp; TCP Multi-Stack Active</span>
+              </div>
+              <div class="set-rows">
+                <div class="set-grid2">
+                  <div class="set-box">
+                    <div style="display:flex;justify-content:space-between"><label class="lbl-caps">INCOMING LISTENING PORT</label><span class="mono" style="font-size:11px;color:var(--emerald)">● OPEN</span></div>
+                    <div style="display:flex;gap:8px;margin-top:6px"><input type="number" data-pref-num="btPort" value="6881" style="width:100px"/><button class="btn" id="btnRandomPort">Random</button></div>
+                    <label class="check-inline"><input type="checkbox" data-pref-check="btUpnp"/> Use UPnP / NAT-PMP Port Mapping</label>
+                    <label class="check-inline"><input type="checkbox" data-pref-check="btRandomPort"/> Randomize port on daemon start</label>
+                    <button class="btn" id="btnTestPort" style="width:100%;margin-top:6px;font-size:11px">⌁ Test Port Forwarding Now</button>
+                  </div>
+                  <div class="set-box">
+                    <div style="display:flex;justify-content:space-between"><h4 style="margin:0;font-size:13px">Peer Discovery &amp; Swarm Amplification</h4><span class="mono cyan" style="font-size:11px">DHT Nodes: 1,480</span></div>
+                    <div class="set-grid2" style="margin-top:8px">
+                      <div class="set-row"><div><h4 style="font-size:12px">Mainline DHT Network</h4><p>Decentralized trackerless swarm discovery for magnet URIs.</p></div><button class="toggle" data-pref="dhtEnabled"></button></div>
+                      <div class="set-row"><div><h4 style="font-size:12px">Peer Exchange (PeX)</h4><p>Exchanges peer lists directly among interconnected swarm clients.</p></div><button class="toggle" data-pref="pexEnabled"></button></div>
+                      <div class="set-row"><div><h4 style="font-size:12px">Local Peer Discovery (LSD)</h4><p>Multicast LAN discovery for up to 10Gbps local transfers.</p></div><button class="toggle" data-pref="lsdEnabled"></button></div>
+                      <div class="set-row"><div><h4 style="font-size:12px">Protocol Encryption (MSE/PE)</h4><p>Obfuscated headers to bypass ISP traffic shaping.</p></div><span class="chip2 mono">FORCED</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="set-grid2">
+                  <div class="set-box">
+                    <h4 style="margin:0 0 8px;font-size:13px">Socket &amp; Connection Concurrency Limits <span class="lbl-caps" style="float:right">EPoll Sockets</span></h4>
+                    <div class="kv-row"><span>Global Maximum Peer Connections:</span><input type="number" data-pref-num="maxPeerConnections" value="500"/></div>
+                    <div class="kv-row" style="margin-top:6px"><span>Maximum Connections per Torrent:</span><input type="number" data-pref-num="maxConnectionsPerTorrent" value="80"/></div>
+                    <div class="kv-row" style="margin-top:6px"><span>Upload Slots per Torrent:</span><input type="number" data-pref-num="uploadSlots" value="8"/></div>
+                  </div>
+                  <div class="set-box">
+                    <h4 style="margin:0 0 8px;font-size:13px">Automated Seeding Ratio Limits <span class="lbl-caps" style="float:right;color:var(--emerald)">RATIO GUARDIAN</span></h4>
+                    <div class="kv-row"><label class="check-inline" style="margin:0"><input type="checkbox" data-pref-check="seedRatioEnabled"/> Stop seeding when upload ratio reaches:</label><input type="number" step="0.1" data-pref-num="seedRatioStop" value="1.5" style="width:64px"/></div>
+                    <div class="kv-row" style="margin-top:6px"><label class="check-inline" style="margin:0"><input type="checkbox" data-pref-check="seedTimeEnabled"/> Or when seeding time exceeds 72 hours</label><span class="mono muted" style="font-size:11px">72h</span></div>
+                    <div class="kv-row" style="margin-top:8px"><span class="muted" style="font-size:12px">Action on limit reached:</span><select data-pref-str="seedAction" class="set-input" style="width:200px"><option>Pause Task</option><option>Remove from Swarm (Keep Payload)</option><option>Throttle to Super-Seeding 5 KB/s</option></select></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL: BROWSER -->
+          <div class="spanel" data-spanel="browser">
+            <div class="set-grid2">
+              <div class="card">
+                <div class="set-chead">
+                  <div><h3 style="margin:0">Browser Sniffer &amp; Extension Bridge</h3><div class="lbl-caps">NATIVE MESSAGING HOST API INTERCEPTION</div></div>
+                  <span class="chip2 mono">Host Port: 6800</span>
+                </div>
+                <div class="set-rows">
+                  <div class="set-grid4">
+                    <div class="bcard"><div style="display:flex;justify-content:space-between"><strong style="font-size:12px">Chrome</strong><span class="ok-dot"></span></div><div class="lbl-sub" style="margin:2px 0">v3.4.0</div><span class="lbl-caps" style="color:var(--emerald)">CONNECTED</span></div>
+                    <div class="bcard"><div style="display:flex;justify-content:space-between"><strong style="font-size:12px">Firefox</strong><span class="ok-dot"></span></div><div class="lbl-sub" style="margin:2px 0">v3.4.0</div><span class="lbl-caps" style="color:var(--emerald)">CONNECTED</span></div>
+                    <div class="bcard"><div style="display:flex;justify-content:space-between"><strong style="font-size:12px">Edge</strong><span class="ok-dot"></span></div><div class="lbl-sub" style="margin:2px 0">v3.4.0</div><span class="lbl-caps" style="color:var(--emerald)">CONNECTED</span></div>
+                    <div class="bcard"><div style="display:flex;justify-content:space-between"><strong style="font-size:12px">Brave</strong><span class="ok-dot"></span></div><div class="lbl-sub" style="margin:2px 0">v3.4.0</div><span class="lbl-caps" style="color:var(--emerald)">CONNECTED</span></div>
+                  </div>
+                  <div class="set-box">
+                    <div style="display:flex;justify-content:space-between"><label class="lbl-caps">INTERCEPTED FILE EXTENSIONS</label><button class="link-btn" id="btnAddExt">+ Add Extension</button></div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px" id="extTags">
+                      <span class="ext-tag">.iso <button data-ext-rm>×</button></span><span class="ext-tag">.zip <button data-ext-rm>×</button></span><span class="ext-tag">.7z <button data-ext-rm>×</button></span><span class="ext-tag">.exe <button data-ext-rm>×</button></span><span class="ext-tag">.tar.gz <button data-ext-rm>×</button></span><span class="ext-tag">.mkv <button data-ext-rm>×</button></span><span class="ext-tag">.mp4 <button data-ext-rm>×</button></span><span class="ext-tag">.bin <button data-ext-rm>×</button></span>
+                    </div>
+                  </div>
+                  <div class="set-row"><div><h4>File Size Interception Threshold</h4><p>Ignore smaller files and allow the standard browser to complete download.</p></div><div style="display:flex;gap:6px;align-items:center"><span class="mono cyan" style="font-size:12px">&gt;</span><input type="number" data-pref-num="interceptMinMb" value="15" style="width:64px"/><span class="lbl-caps">MB</span></div></div>
+                  <div class="set-row"><div><h4>Auto-grab HTTP/2 and HLS video streaming manifests</h4><p>Sniffs and reconstructs master playlist segments (.m3u8, .mpd, .ts) with dynamic bitrate selector.</p></div><button class="toggle" data-pref="hlsSniff"></button></div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="set-chead">
+                  <div><h3 style="margin:0">Whitelisted &amp; Ignored Domain Filter</h3><div class="lbl-caps">BROWSER INTEGRATION EXCEPTIONS &amp; BYPASS RULES</div></div>
+                  <button class="btn" id="btnAddDomain" style="font-size:11px">+ Add Domain</button>
+                </div>
+                <div class="set-rows">
+                  <div class="set-box">
+                    <label class="lbl-caps">BYPASSED DOMAINS (NEVER INTERCEPT AUTOMATICALLY)</label>
+                    <div style="display:flex;flex-direction:column;gap:5px;margin-top:8px" id="domainList">
+                      <div class="mini-row"><span class="mono" style="font-size:11px">*.internal.company-intranet.net</span><button class="link-btn" data-domain-rm>Remove</button></div>
+                      <div class="mini-row"><span class="mono" style="font-size:11px">*.login.microsoftonline.com</span><button class="link-btn" data-domain-rm>Remove</button></div>
+                      <div class="mini-row"><span class="mono" style="font-size:11px">github.com/*/archive/</span><button class="link-btn" data-domain-rm>Remove</button></div>
+                    </div>
+                  </div>
+                  <div class="set-box">
+                    <div style="display:flex;justify-content:space-between"><label class="lbl-caps">AUTO-MIME ROUTING PREVIEW</label><span class="mono cyan" style="font-size:11px">4 Active Rules</span></div>
+                    <table class="mini" style="margin-top:6px"><thead><tr><th>CATEGORY</th><th>DESTINATION</th></tr></thead><tbody>
+                      <tr><td>Video Streams</td><td class="mono" style="font-size:11px">\Downloads\AeroFlow_Vault\Movies</td></tr>
+                      <tr><td>Archives &amp; ISOs</td><td class="mono" style="font-size:11px">\Downloads\AeroFlow_Vault\Archives</td></tr>
+                    </tbody></table>
+                  </div>
+                </div>
+                <div class="set-foot"><span class="muted">Native Messaging Socket: ws://127.0.0.1:6800</span><button class="link-btn" id="btnTestExt">Test Extension Ping</button></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL: SECURITY -->
+          <div class="spanel" data-spanel="security">
+            <div class="set-grid2">
+              <div class="card">
+                <div class="set-chead">
+                  <div><h3 style="margin:0">Cryptographic Verification &amp; Virus Hook</h3><div class="lbl-caps">DATA INTEGRITY &amp; ENDPOINT SANITIZATION</div></div>
+                  <span class="chip2 mono" style="color:var(--emerald)">Defender Hook Ready</span>
+                </div>
+                <div class="set-rows">
+                  <div class="set-row"><div><h4>Automated Post-Download Hash Verification</h4><p>Computes SHA-256 against remote checksum tags upon chunk assembly.</p></div><button class="toggle" data-pref="autoVerifySha256"></button></div>
+                  <div class="set-row"><div><h4>Auto-Quarantine Corrupted Chunks</h4><p>Isolates unmatching piece hashes into a sandbox directory and automatically requests clean re-download.</p></div><button class="toggle" data-pref="quarantineCorrupt"></button></div>
+                  <div class="set-box">
+                    <div style="display:flex;justify-content:space-between"><h4 style="margin:0;font-size:12px">Antivirus Scanner Execution Hook</h4><span class="lbl-caps">POST-WRITE TRIGGER</span></div>
+                    <div style="display:flex;justify-content:flex-end;margin-top:6px"><button class="toggle" data-pref="avScanEnabled"></button></div>
+                    <label class="lbl-caps" style="display:block;margin-top:8px">EXECUTABLE PATH</label>
+                    <input type="text" data-pref-str="avPath" value="C:\Program Files\Windows Defender\MpCmdRun.exe" style="margin-top:4px"/>
+                    <label class="lbl-caps" style="display:block;margin-top:8px">ARGUMENTS &amp; FLAGS</label>
+                    <div style="display:flex;gap:8px;align-items:center;margin-top:4px"><input type="text" data-pref-str="avArgs" value="-Scan -ScanType 3 -File &quot;%FILE_PATH%&quot;"/><span class="chip2 mono">%FILE_PATH%</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="set-chead">
+                  <div><h3 style="margin:0">Strict TLS &amp; DNS Leak Protection</h3><div class="lbl-caps">ENCRYPTED SNI &amp; ENCLAVE RESOLUTION POLICIES</div></div>
+                  <span class="chip2 mono">TLS 1.3 Strict</span>
+                </div>
+                <div class="set-rows">
+                  <div class="set-row"><div><h4>Enforce TLS 1.3 / ECH (Encrypted Client Hello)</h4><p>Encrypts the Server Name Indication (SNI) to prevent ISP eavesdropping on download targets.</p></div><button class="toggle" data-pref="tlsStrict"></button></div>
+                  <div class="set-row"><div><h4>DNS-over-HTTPS (DoH) Direct Resolver</h4><p>Bypasses local OS DNS resolver to defeat DNS poisoning and domain hijacks.</p></div><button class="toggle" data-pref="dohEnabled"></button></div>
+                  <div class="set-box">
+                    <label class="lbl-caps">SECURE DOH PROVIDER</label>
+                    <select data-pref-str="dohProvider" class="set-input" style="margin-top:6px"><option>Cloudflare 1.1.1.1</option><option>Quad9 Strict</option><option>Custom Zero-Log Resolver</option></select>
+                  </div>
+                </div>
+                <div class="set-foot"><span style="color:var(--emerald)">✓ All cryptographic ciphers verified</span><span class="mono muted">Zero Leaks Detected</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL: NOTIFICATIONS -->
+          <div class="spanel" data-spanel="notifications">
+            <div class="set-grid2">
+              <div class="card">
+                <div class="set-chead">
+                  <div><h3 style="margin:0">Desktop Toast Alerts &amp; Audio Feedback</h3><div class="lbl-caps">OS NOTIFICATION CENTER &amp; SYNTH SOUND PACKS</div></div>
+                  <span class="chip2 mono">Toasts Active</span>
+                </div>
+                <div class="set-rows">
+                  <div class="set-row"><div><h4>Show Windows Toast on Task Completion</h4><p>Displays native banner with quick actions: "Open Folder", "Launch File", "Verify Hash".</p></div><button class="toggle" data-pref="toastOnComplete"></button></div>
+                  <div class="set-row"><div><h4>Alert on Transfer Failure or Block Corruption</h4><p>Immediate high-priority visual popup when socket breaks or remote host throttles.</p></div><button class="toggle" data-pref="alertOnFailure"></button></div>
+                  <div class="set-box">
+                    <div style="display:flex;justify-content:space-between"><span style="font-size:13px">Audio Scheme &amp; FX Pack</span><span class="mono cyan" style="font-size:11px" id="soundPackLabel">Cyberpunk Mechanical Click</span></div>
+                    <div class="set-grid2" style="margin-top:8px">
+                      <select data-pref-str="soundPack" class="set-input"><option>Cyberpunk Mechanical Click</option><option>8-Bit Retro Synth Chime</option><option>Minimal Subtle Thud</option><option>Mute All Sounds</option></select>
+                      <button class="btn" id="btnTestSound" style="font-size:11px">🔊 Test Sound FX</button>
+                    </div>
+                    <div class="slider-labels" style="margin-top:8px"><span>FX VOLUME</span><span class="cyan mono" data-range-out="soundVolume" data-unit="%">70%</span></div>
+                    <input type="range" min="0" max="100" step="5" value="70" data-pref-range="soundVolume" data-unit="%"/>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="set-chead">
+                  <div><h3 style="margin:0">Remote Webhook Notifications</h3><div class="lbl-caps">HEADLESS &amp; HOMELAB BOT INTEGRATION</div></div>
+                  <span class="chip2 mono" style="color:var(--emerald)">Bot Sockets Ready</span>
+                </div>
+                <div class="set-rows">
+                  <div class="set-box">
+                    <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px">Discord Channel Webhook</span><label class="check-inline" style="margin:0"><input type="checkbox" data-pref-check="discordWebhookEnabled"/> Enabled</label></div>
+                    <input type="text" data-pref-str="discordWebhook" value="" placeholder="https://discord.com/api/webhooks/..." style="margin-top:6px"/>
+                  </div>
+                  <div class="set-box">
+                    <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px">Telegram Bot Token &amp; Chat ID</span><label class="check-inline" style="margin:0"><input type="checkbox" data-pref-check="telegramEnabled"/> Enabled</label></div>
+                    <div class="set-grid2" style="margin-top:6px"><input type="text" data-pref-str="telegramToken" value="" placeholder="Bot Token…"/><input type="text" data-pref-str="telegramChat" value="" placeholder="Chat ID…"/></div>
+                  </div>
+                </div>
+                <div class="set-foot"><span class="muted">Sends file size, hash &amp; download duration</span><button class="link-btn" id="btnTestWebhook">⇧ Test Webhook Payload</button></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <div class="telemetry">
+        <div class="tcard"><h4>Throughput Telemetry (60s) — <span class="cyan mono" id="teleRate">38.4 MB/s (Peak 44.8)</span></h4><canvas id="telemetryCanvas" width="400" height="80"></canvas>
+          <div class="mono muted" style="font-size:11px;display:flex;gap:14px;margin-top:6px"><span>Buffer Cache: 128 MB</span><span>Packet Loss: 0.00%</span><span>Disk Write: 42.1 MB/s</span></div></div>
+        <div class="tcard"><h4>32-Thread Connection Matrix — <span class="cyan">32 Active</span></h4><div class="thread-grid" id="threadGrid"></div>
+          <div class="mono muted" style="font-size:11px;margin-top:6px">■ Done ■ Downloading ■ Queued</div></div>
+        <div class="tcard"><h4>Storage &amp; Crypto Hash — <span class="chip ok">HASH MATCHED</span></h4>
+          <div class="muted" style="font-size:11px">Destination:</div><div class="mono" style="font-size:11px">D:\Downloads\ISOs\Ubuntu-24.04.1-desktop…</div>
+          <div class="muted" style="font-size:11px;margin-top:6px">SHA-256:</div><div class="mono" style="font-size:11px">c2e260902c1143c713be244db81180…9f31b87b</div>
+          <div style="display:flex;gap:8px;margin-top:8px"><button class="btn" id="btnOpenFolder">🗀 Open Folder</button><button class="btn" id="btnRecheckHash">Re-check Hash</button></div></div>
+      </div>
+      <div class="statusbar mono"><span><span class="ok">●</span> Daemon Socket: 127.0.0.1:6800 Connected</span><span>Global Limit: <strong>No Limit</strong></span><span>Active Profile: <strong class="cyan">"Ultra-Performance.json"</strong></span><span class="muted">Engine Version: v4.2.3-win64</span><span style="color:var(--emerald)">All Sockets Ready</span><span style="margin-left:auto" id="sysStat">CPU: 1.4% RAM: 148 MB</span></div>
+    </main>
+  </div>
+</div>
+
+<!-- ADD URL MODAL -->
+<!-- DOWNLOAD FILE INFO DIALOG (IDM Accelerator Core) -->
+<div class="overlay hidden" id="fileInfoModal">
+  <div class="fim">
+    <div class="fim-titlebar">
+      <div style="display:flex;gap:10px;align-items:center">
+        <span class="fim-glyph">⇩</span>
+        <strong style="font-size:13px">AeroFlow - Download File Info</strong>
+        <span class="chip2">IDM ACCELERATOR CORE</span>
+      </div>
+      <div class="win-btns"><button data-fim="minimize" title="Minimize">─</button><button data-fim="maximize" title="Maximize">▢</button><button data-fim="close" title="Close">✕</button></div>
+    </div>
+    <div class="fim-tabbar">
+      <div class="tabs">
+        <button class="active" id="fimTabInfo">◉ Download File Info</button>
+        <button id="fimTabProgress">✳ Live Transfer Progress <span class="ping"></span></button>
+      </div>
+      <span class="mono muted" style="font-size:11px">((•)) Engine Sockets: <strong class="cyan" id="fimSockets">32/32</strong></span>
+    </div>
+
+    <div id="fimViewInfo" style="padding:14px;overflow:auto;max-height:70vh">
+      <div class="fim-file">
+        <div class="fim-icon"><span style="font-size:22px">💿</span><span class="mono" style="font-size:9px;font-weight:700" id="fimExt">.ISO</span><span class="fim-ok">✓</span></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+            <h3 id="fimName" style="margin:0;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Paste a URL to inspect</h3>
+            <span class="mono cyan" style="font-size:17px;font-weight:600;white-space:nowrap" id="fimSize">--</span>
+          </div>
+          <div class="fim-urlrow"><span>🔗</span><input id="fimUrl" class="fim-urlinput" type="text" placeholder="https://… paste download URL or magnet link"/><button class="icon-btn" id="fimCopy" title="Copy URL">⧉</button></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <span class="chip2" id="fimCatBadge">🗂 FILE TYPE DETECTION PENDING</span>
+            <span class="chip2" style="color:var(--amber);border-color:rgba(245,158,11,.35)" id="fimResume">● Direct Link • Resume Supported: Checking…</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="fim-card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <label class="lbl-caps">🗀 DESTINATION DIRECTORY ('SAVE AS')</label>
+          <span class="mono muted" style="font-size:11px" id="fimDrive">Drive D: [Free: — / —]</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <div style="flex:1;position:relative"><input id="fimDest" type="text" value="D:\Downloads\AeroFlow"/><span class="fim-ntfs">NTFS</span></div>
+          <button class="btn" id="fimBrowse">🗀 Browse…</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:12px">Category:</span><span id="fimCats" style="display:flex;gap:6px"></span></div>
+          <div style="display:flex;gap:14px;align-items:center">
+            <label class="check-inline" style="margin:0"><input type="checkbox" id="fimRemember" checked/> Remember folder for this category</label>
+            <label class="check-inline" style="margin:0"><input type="checkbox" id="fimStartNow" checked/> Start transfer immediately</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="fim-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;gap:8px;align-items:center"><span class="cyan">▤</span><span class="lbl-caps" style="color:var(--tx1)">PARALLEL ACCELERATION PIPELINE</span><input id="fimThreads" type="number" min="1" max="64" value="32" class="fim-threads"/><span class="muted" style="font-size:11px">Threads</span></div>
+          <div style="display:flex;gap:8px;align-items:center"><span class="muted" style="font-size:12px">Speed Cap:</span>
+            <select id="fimCap" class="set-input" style="width:190px"><option value="0">Unlimited (Max Line)</option><option value="50">Limit to 50 MB/s</option><option value="25">Limit to 25 MB/s</option><option value="10">Limit to 10 MB/s</option></select>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin:10px 0 6px"><span class="mono muted" style="font-size:11px">Dynamic Multi-Segment Chunks: <span class="cyan" id="fimChunkLabel">32</span> Sockets Ready</span><span class="mono cyan" style="font-size:11px" id="fimTurbo">Turbo Boost 32x Enabled</span></div>
+        <div class="fim-sockets" id="fimSocketsMap"></div>
+      </div>
+
+      <div class="fim-card" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><label class="lbl-caps">🤖 ON COMPLETION ACTION</label><select id="fimOnDone" class="set-input" style="margin-top:6px"><option>Open File Immediately</option><option>Open Enclosing Directory</option><option>Scan with Microsoft Defender</option><option>Shut Down PC when Done</option><option selected>Do Nothing (Keep in AeroFlow Queue)</option></select></div>
+        <div style="display:flex;flex-direction:column;justify-content:flex-end;gap:6px">
+          <label class="check-inline" style="margin:0"><input type="checkbox" id="fimHashCheck" checked/> <span style="color:var(--emerald)">Run SHA-256 hash check after assembly</span></label>
+          <label class="check-inline" style="margin:0"><input type="checkbox" id="fimChime"/> Play auditory notification chime</label>
+        </div>
+      </div>
+    </div>
+
+    <div id="fimViewProgress" style="display:none;padding:14px;overflow:auto;max-height:70vh">
+      <div class="fim-card" style="margin-top:0">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;gap:8px;align-items:center"><span class="ping"></span><strong id="fimProgTitle" style="font-size:13px">Waiting to start…</strong></div>
+          <span class="chip2 mono" id="fimProgStatus">STATUS: QUEUED (0%)</span>
+        </div>
+        <div class="prog-track" style="height:10px;margin-top:10px"><div class="prog-fill" id="fimProgBar" style="width:0%"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px" class="mono"><span class="muted" style="font-size:11px" id="fimProgBytes">Downloaded: 0 B / --</span><span class="cyan" style="font-size:11px" id="fimProgPct">0% Completed</span></div>
+        <div class="set-grid4" style="margin-top:12px">
+          <div class="set-box"><span class="lbl-caps">TRANSFER RATE</span><div class="mono cyan" style="font-size:15px" id="fimRate">0 KB/s</div></div>
+          <div class="set-box"><span class="lbl-caps">ESTIMATED TIME</span><div class="mono" style="font-size:15px" id="fimEta">--</div></div>
+          <div class="set-box"><span class="lbl-caps">RESUME CAPABILITY</span><div id="fimResume2" style="color:var(--emerald);font-size:12px;margin-top:4px">Checking…</div></div>
+          <div class="set-box"><span class="lbl-caps">ACTIVE STREAMS</span><div class="mono" style="font-size:15px" id="fimStreams">0 / 32</div></div>
+        </div>
+      </div>
+      <div class="fim-card">
+        <div style="display:flex;justify-content:space-between"><span class="lbl-caps">▦ ACTIVE CONNECTION SEGMENTS (16 MASTER CHUNK VISUALIZER)</span><span class="mono muted" style="font-size:11px">HTTP Keep-Alive • TCP BBR</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:10px" id="fimChunks"></div>
+      </div>
+      <div class="fim-card" style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center"><span class="muted" style="font-size:12px">Bandwidth Throttler:</span><button class="btn" id="fimCapChip" style="font-size:11px">Cap at 50 MB/s</button></div>
+        <div style="display:flex;gap:8px"><button class="btn" id="fimPause">⏸ Pause</button><button class="btn" id="fimAbort" style="color:var(--red)">✕ Abort</button></div>
+      </div>
+    </div>
+
+    <div class="fim-footer">
+      <div style="display:flex;gap:7px;align-items:center"><span class="ok-dot"></span><span class="mono muted" style="font-size:11px">Buffer: <strong id="fimBuffer">256 MB RAM</strong></span></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="fimCancel">Cancel</button>
+        <button class="btn" id="fimQueue">⏱ Download Later (Queue)</button>
+        <button class="btn-primary btn" id="fimStart">⚡ Start Download</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="hidden" style="position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:100;background:#262f47;border:1px solid rgba(var(--accent-rgb),.35);color:#f8fafc;font-size:12px;padding:8px 14px;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.6)"></div>
+<div class="overlay hidden" id="addModal">
+  <div class="modal">
+    <header><div><strong>+ Add New Download / Batch URL Importer</strong> <span class="chip">Multi-Stream Engine</span></div><button class="icon-btn" id="closeModal">✕</button></header>
+    <div style="padding:14px 18px">
+      <div class="tabs" id="modalTabs"><button data-mode="single" class="active">Single URL</button><button data-mode="batch">Batch URLs / Clipboard</button><button data-mode="torrent">Torrent / Magnet</button><button data-mode="sniffer">Sniffer / Stream Grabber</button></div>
+      <div style="display:flex;justify-content:space-between;margin:10px 0"><span class="muted mono" style="font-size:11px">DETECTED QUEUE ENTRIES (<span id="batchCount">4</span>) ●</span>
+        <div style="display:flex;gap:6px"><button class="btn" id="btnPasteClip">📋 Paste from Clipboard</button><button class="btn" id="btnImportTxt">Import .TXT / .LST</button></div></div>
+      <div id="batchList"></div>
+      <div style="display:flex;gap:8px;margin-top:6px"><input type="text" id="newUrl" placeholder="Add additional URL or magnet link (Ctrl+V)…"/><button class="btn" id="btnStageUrl">+ Add</button></div>
+      <div class="cards" style="margin-top:12px">
+        <div class="card"><h3 style="font-size:12px">DESTINATION &amp; STORAGE TARGET <span class="chip">Free: 642 GB NVMe</span></h3>
+          <div style="display:flex;gap:8px"><input type="text" id="destDir" value="D:\Downloads\Batches\Projects_2025\"/><button class="btn" id="btnBrowseDest">Browse…</button></div>
+          <div style="display:flex;gap:8px;margin-top:8px;align-items:center"><span class="muted" style="font-size:12px">Category:</span><select style="width:200px;height:30px"><option>Software / OS / Media / AI</option><option>Media Vault</option><option>Archives</option></select><label class="muted" style="font-size:12px"><input type="checkbox" checked/> Auto-sort</label></div></div>
+        <div class="card"><h3 style="font-size:12px">HARDWARE &amp; CONNECTION PIPELINES <span class="cyan" style="float:right">Turbo Mode Active</span></h3>
+          <div class="mono" style="font-size:12px">Segment Connections: <span class="cyan" id="modalThreads">32 Threads (Turbo)</span></div>
+          <input type="range" id="modalSlider" min="1" max="64" value="32"/>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><select><option>4 Tasks (Recommended)</option><option>8 Tasks</option></select><select><option>Unlimited (Turbo Boost)</option><option>15 MB/s</option></select></div></div>
+      </div>
+      <div class="card" style="margin-top:12px"><h3 style="font-size:12px">AUTOMATION &amp; CRYPTOGRAPHIC VERIFICATION</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div class="check"><input type="checkbox" id="optStartNow" checked/> Start transfer immediately</div>
+          <div class="check"><input type="checkbox" id="optVerify" checked/> SHA-256 post-verification</div>
+          <div class="check"><input type="checkbox" id="optExtract"/> Auto-extract archives</div>
+        </div>
+        <input type="text" id="shaInput" placeholder="Optional expected SHA-256 hex…" style="margin-top:8px" class="mono"/>
+      </div>
+    </div>
+    <footer><span class="mono muted" style="font-size:11px;margin-right:auto" id="batchSummary">4 items • ~24.8 GB • ~4m 52s @ 85 MB/s</span>
+      <button class="btn" id="cancelModal">Cancel</button><button class="btn" id="btnSavePaused">Save to Queue (Paused)</button><button class="btn-primary btn" id="startBatch">⚡ Start Batch Download</button></footer>
+  </div>
+</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
